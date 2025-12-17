@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Box, Paper, Typography, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import { Box, Paper, Typography, ToggleButton, ToggleButtonGroup, Button, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import { motion } from 'framer-motion';
 import {
   Chart as ChartJS,
@@ -15,6 +15,7 @@ import {
 } from 'chart.js';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 ChartJS.register(
   CategoryScale,
@@ -30,6 +31,7 @@ ChartJS.register(
 
 const ProgressGraph = () => {
   const [chartType, setChartType] = useState('line');
+  const [timePeriod, setTimePeriod] = useState('week'); // week, 2weeks, 3weeks, month
 
   const getInitialProgressData = useCallback(() => {
     let data = [];
@@ -38,38 +40,21 @@ const ProgressGraph = () => {
       const saved = localStorage.getItem('progressData');
       if (saved) {
         data = JSON.parse(saved);
-      } else {
-        // Generate sample data for the last 7 days
-        data = Array.from({ length: 7 }, (_, i) => {
-          const date = new Date();
-          date.setDate(date.getDate() - (6 - i));
-          return {
-            date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-            score: Math.floor(Math.random() * 40) + 40, // 40-80% range
-          };
-        });
       }
+      // Remove the sample data generation - start with empty data
     } catch (error) {
       console.error('Error loading progress data:', error);
-      // Generate default data if parsing fails
-      data = Array.from({ length: 7 }, (_, i) => {
-        const date = new Date();
-        date.setDate(date.getDate() - (6 - i));
-        return {
-          date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          score: Math.floor(Math.random() * 40) + 40,
-        };
-      });
+      data = [];
     }
 
     // Check if we need to update today's score
     try {
       const today = new Date().toDateString();
-      const savedAnswers = localStorage.getItem(`questionnaire_${today}`);
+      const savedAnswers = localStorage.getItem(`habits_${today}`);
       if (savedAnswers) {
-        const answers = JSON.parse(savedAnswers);
-        const yesCount = answers.filter((a) => a.answer === 'yes').length;
-        const score = Math.round((yesCount / 8) * 100);
+        const habits = JSON.parse(savedAnswers);
+        const completedCount = habits.filter((h) => h.completed).length;
+        const score = Math.round((completedCount / habits.length) * 100);
         
         const todayLabel = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         const todayIndex = data.findIndex(d => d.date === todayLabel);
@@ -90,38 +75,65 @@ const ProgressGraph = () => {
     return data;
   }, []);
 
-  const [progressData] = useState(getInitialProgressData);
+  const [progressData, setProgressData] = useState(getInitialProgressData);
+  const [openResetDialog, setOpenResetDialog] = useState(false);
+
+  // Filter data based on selected time period
+  const filteredData = useMemo(() => {
+    const days = {
+      week: 7,
+      '2weeks': 14,
+      '3weeks': 21,
+      month: 30,
+    };
+    const daysToShow = days[timePeriod] || 7;
+    return progressData.slice(-daysToShow);
+  }, [progressData, timePeriod]);
+
+  const handleResetData = () => {
+    localStorage.removeItem('progressData');
+    localStorage.removeItem('memories');
+    // Clear habit data for all dates
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('habits_')) {
+        localStorage.removeItem(key);
+      }
+    });
+    setProgressData([]);
+    setOpenResetDialog(false);
+    window.location.reload(); // Refresh to update all components
+  };
 
   const MotionDiv = motion.div;
 
   const lineChartData = useMemo(() => ({
-    labels: progressData.map((d) => d.date),
+    labels: filteredData.map((d) => d.date),
     datasets: [
       {
         label: 'Daily Habit Score (%)',
-        data: progressData.map((d) => d.score),
+        data: filteredData.map((d) => d.score),
         borderColor: 'rgb(102, 126, 234)',
         backgroundColor: 'rgba(102, 126, 234, 0.2)',
         tension: 0.4,
         fill: true,
       },
     ],
-  }), [progressData]);
+  }), [filteredData]);
 
   const barChartData = useMemo(() => ({
-    labels: progressData.map((d) => d.date),
+    labels: filteredData.map((d) => d.date),
     datasets: [
       {
         label: 'Daily Habit Score (%)',
-        data: progressData.map((d) => d.score),
-        backgroundColor: progressData.map((d) =>
+        data: filteredData.map((d) => d.score),
+        backgroundColor: filteredData.map((d) =>
           d.score >= 70
             ? 'rgba(75, 192, 192, 0.6)'
             : d.score >= 40
             ? 'rgba(255, 206, 86, 0.6)'
             : 'rgba(255, 99, 132, 0.6)'
         ),
-        borderColor: progressData.map((d) =>
+        borderColor: filteredData.map((d) =>
           d.score >= 70
             ? 'rgba(75, 192, 192, 1)'
             : d.score >= 40
@@ -131,10 +143,10 @@ const ProgressGraph = () => {
         borderWidth: 2,
       },
     ],
-  }), [progressData]);
+  }), [filteredData]);
 
-  const avgScore = progressData.length > 0 
-    ? Math.round(progressData.reduce((sum, d) => sum + d.score, 0) / progressData.length)
+  const avgScore = filteredData.length > 0 
+    ? Math.round(filteredData.reduce((sum, d) => sum + d.score, 0) / filteredData.length)
     : 0;
 
   const doughnutData = useMemo(() => ({
@@ -194,79 +206,157 @@ const ProgressGraph = () => {
             </Typography>
           </Box>
 
-          <ToggleButtonGroup
-            value={chartType}
-            exclusive
-            onChange={(e, newType) => newType && setChartType(newType)}
-            size="small"
-            aria-label="chart type"
+          <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
+            <ToggleButtonGroup
+              value={timePeriod}
+              exclusive
+              onChange={(e, newPeriod) => newPeriod && setTimePeriod(newPeriod)}
+              size="small"
+              aria-label="time period"
+            >
+              <ToggleButton value="week" aria-label="1 week">
+                1 Week
+              </ToggleButton>
+              <ToggleButton value="2weeks" aria-label="2 weeks">
+                2 Weeks
+              </ToggleButton>
+              <ToggleButton value="3weeks" aria-label="3 weeks">
+                3 Weeks
+              </ToggleButton>
+              <ToggleButton value="month" aria-label="1 month">
+                Month
+              </ToggleButton>
+            </ToggleButtonGroup>
+            
+            <ToggleButtonGroup
+              value={chartType}
+              exclusive
+              onChange={(e, newType) => newType && setChartType(newType)}
+              size="small"
+              aria-label="chart type"
+            >
+              <ToggleButton value="line" aria-label="line chart">
+                Line
+              </ToggleButton>
+              <ToggleButton value="bar" aria-label="bar chart">
+                Bar
+              </ToggleButton>
+              <ToggleButton value="doughnut" aria-label="doughnut chart">
+                Average
+              </ToggleButton>
+            </ToggleButtonGroup>
+            
+            <Button
+              variant="outlined"
+              color="error"
+              size="small"
+              startIcon={<DeleteIcon />}
+              onClick={() => setOpenResetDialog(true)}
+            >
+              Reset All Data
+            </Button>
+          </Box>
+        </Box>
+
+        {filteredData.length === 0 ? (
+          <Paper
+            elevation={0}
+            sx={{
+              p: 6,
+              textAlign: 'center',
+              background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+              borderRadius: 2,
+              minHeight: 300,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
           >
-            <ToggleButton value="line" aria-label="line chart">
-              Line
-            </ToggleButton>
-            <ToggleButton value="bar" aria-label="bar chart">
-              Bar
-            </ToggleButton>
-            <ToggleButton value="doughnut" aria-label="doughnut chart">
-              Average
-            </ToggleButton>
-          </ToggleButtonGroup>
-        </Box>
-
-        <Box sx={{ height: 300, mb: 2 }}>
-          {chartType === 'line' && <Line data={lineChartData} options={chartOptions} />}
-          {chartType === 'bar' && <Bar data={barChartData} options={chartOptions} />}
-          {chartType === 'doughnut' && (
-            <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height="100%">
-              <Box sx={{ width: 250, height: 250 }}>
-                <Doughnut data={doughnutData} options={{ ...chartOptions, cutout: '70%' }} />
-              </Box>
-              <Typography variant="h4" sx={{ mt: 2 }}>
-                {avgScore}%
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                7-Day Average Score
-              </Typography>
+            <Typography variant="h2" sx={{ mb: 2 }}>
+              📊
+            </Typography>
+            <Typography variant="h6" color="text.primary" gutterBottom>
+              No Data Yet
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Start checking off your daily habits to see your progress here!
+            </Typography>
+          </Paper>
+        ) : (
+          <>
+            <Box sx={{ height: 300, mb: 2 }}>
+              {chartType === 'line' && <Line data={lineChartData} options={chartOptions} />}
+              {chartType === 'bar' && <Bar data={barChartData} options={chartOptions} />}
+              {chartType === 'doughnut' && (
+                <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height="100%">
+                  <Box sx={{ width: 250, height: 250 }}>
+                    <Doughnut data={doughnutData} options={{ ...chartOptions, cutout: '70%' }} />
+                  </Box>
+                  <Typography variant="h4" sx={{ mt: 2 }}>
+                    {avgScore}%
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    7-Day Average Score
+                  </Typography>
+                </Box>
+              )}
             </Box>
-          )}
-        </Box>
 
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-around',
-            mt: 3,
-            p: 2,
-            bgcolor: 'background.default',
-            borderRadius: 2,
-          }}
-        >
-          <Box textAlign="center">
-            <Typography variant="h6" color="primary">
-              {avgScore}%
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Average
-            </Typography>
-          </Box>
-          <Box textAlign="center">
-            <Typography variant="h6" color="success.main">
-              {Math.max(...progressData.map((d) => d.score))}%
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Best Day
-            </Typography>
-          </Box>
-          <Box textAlign="center">
-            <Typography variant="h6" color="info.main">
-              {progressData.length}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Days Tracked
-            </Typography>
-          </Box>
-        </Box>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-around',
+                mt: 3,
+                p: 2,
+                bgcolor: 'background.default',
+                borderRadius: 2,
+              }}
+            >
+              <Box textAlign="center">
+                <Typography variant="h6" color="primary">
+                  {avgScore}%
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Average
+                </Typography>
+              </Box>
+              <Box textAlign="center">
+                <Typography variant="h6" color="success.main">
+                  {filteredData.length > 0 ? Math.max(...filteredData.map((d) => d.score)) : 0}%
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Best Day
+                </Typography>
+              </Box>
+              <Box textAlign="center">
+                <Typography variant="h6" color="info.main">
+                  {filteredData.length}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Days Tracked
+                </Typography>
+              </Box>
+            </Box>
+          </>
+        )}
       </Paper>
+
+      {/* Reset Confirmation Dialog */}
+      <Dialog open={openResetDialog} onClose={() => setOpenResetDialog(false)}>
+        <DialogTitle>Reset All Data?</DialogTitle>
+        <DialogContent>
+          <Typography>
+            This will permanently delete all your habits, memories, and progress data. This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenResetDialog(false)}>Cancel</Button>
+          <Button onClick={handleResetData} color="error" variant="contained">
+            Reset Everything
+          </Button>
+        </DialogActions>
+      </Dialog>
     </MotionDiv>
   );
 };

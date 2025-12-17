@@ -1,8 +1,11 @@
 import { Container, CssBaseline, ThemeProvider, createTheme, Box, Typography, Link } from '@mui/material';
+import { useState, useEffect } from 'react';
 import Greeting from './components/Greeting';
 import MemoryLogger from './components/MemoryLogger';
 import Questionnaire from './components/Questionnaire';
 import ProgressGraph from './components/ProgressGraph';
+import HollaCharacter from './components/HollaCharacter';
+import HabitCheckbox from './components/HabitCheckbox';
 import GitHubIcon from '@mui/icons-material/GitHub';
 
 const theme = createTheme({
@@ -49,6 +52,34 @@ const theme = createTheme({
 });
 
 function App() {
+  const [habitProgress, setHabitProgress] = useState(0);
+  const [hollaMood, setHollaMood] = useState('happy');
+  const [hollaMessage, setHollaMessage] = useState("Let's build great habits together!");
+
+  useEffect(() => {
+    // Update Holla's mood and message based on habit progress
+    if (habitProgress === 100) {
+      setHollaMood('excited');
+      setHollaMessage("🎉 WOW! You completed everything! You're amazing!");
+    } else if (habitProgress >= 70) {
+      setHollaMood('proud');
+      setHollaMessage("You're doing fantastic! Keep up the great work!");
+    } else if (habitProgress >= 40) {
+      setHollaMood('encouraging');
+      setHollaMessage("Great progress! You're on the right track!");
+    } else if (habitProgress > 0) {
+      setHollaMood('happy');
+      setHollaMessage("Every step counts! Let's keep going together!");
+    } else {
+      setHollaMood('encouraging');
+      setHollaMessage("Ready to start today's journey? I'm here with you!");
+    }
+  }, [habitProgress]);
+
+  const handleProgressUpdate = (progress) => {
+    setHabitProgress(progress);
+  };
+
   const handleQuestionnaireComplete = (answers) => {
     console.log('Questionnaire completed:', answers);
   };
@@ -57,17 +88,28 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: 4 }}>
-        <Container maxWidth="lg">
+        <Container maxWidth="xl">
           <Greeting />
           
-          <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' } }}>
-            <Box>
-              <Questionnaire onComplete={handleQuestionnaireComplete} />
+          <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', lg: '300px 1fr' }, mb: 3 }}>
+            {/* Holla Character - Left Side */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <HollaCharacter mood={hollaMood} message={hollaMessage} />
+            </Box>
+
+            {/* Main Content - Right Side */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              {/* Habit Checkbox */}
+              <HabitCheckbox onProgressUpdate={handleProgressUpdate} />
+              
+              {/* Daily Memories */}
               <MemoryLogger />
             </Box>
-            <Box>
-              <ProgressGraph />
-            </Box>
+          </Box>
+
+          {/* Progress Graph - Full Width */}
+          <Box sx={{ mb: 3 }}>
+            <ProgressGraph />
           </Box>
 
           <Box sx={{ mt: 4, textAlign: 'center' }}>
