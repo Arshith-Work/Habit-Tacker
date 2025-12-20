@@ -29,7 +29,7 @@ ChartJS.register(
   ArcElement
 );
 
-const ProgressGraph = () => {
+const ProgressGraph = ({ userName }) => {
   const [chartType, setChartType] = useState('line');
   const [timePeriod, setTimePeriod] = useState('week'); // week, 2weeks, 3weeks, month
 
@@ -37,7 +37,7 @@ const ProgressGraph = () => {
     let data = [];
     
     try {
-      const saved = localStorage.getItem('progressData');
+      const saved = localStorage.getItem(`progressData_${userName}`);
       if (saved) {
         data = JSON.parse(saved);
       }
@@ -50,7 +50,7 @@ const ProgressGraph = () => {
     // Check if we need to update today's score
     try {
       const today = new Date().toDateString();
-      const savedAnswers = localStorage.getItem(`habits_${today}`);
+      const savedAnswers = localStorage.getItem(`habits_${userName}_${today}`);
       if (savedAnswers) {
         const habits = JSON.parse(savedAnswers);
         const completedCount = habits.filter((h) => h.completed).length;
@@ -66,14 +66,14 @@ const ProgressGraph = () => {
           if (data.length > 7) data.shift();
         }
         
-        localStorage.setItem('progressData', JSON.stringify(data));
+        localStorage.setItem(`progressData_${userName}`, JSON.stringify(data));
       }
     } catch (error) {
       console.error('Error updating today\'s score:', error);
     }
 
     return data;
-  }, []);
+  }, [userName]);
 
   const [progressData, setProgressData] = useState(getInitialProgressData);
   const [openResetDialog, setOpenResetDialog] = useState(false);
@@ -91,11 +91,11 @@ const ProgressGraph = () => {
   }, [progressData, timePeriod]);
 
   const handleResetData = () => {
-    localStorage.removeItem('progressData');
-    localStorage.removeItem('memories');
-    // Clear habit data for all dates
+    localStorage.removeItem(`progressData_${userName}`);
+    localStorage.removeItem(`memories_${userName}`);
+    // Clear habit data for this user
     Object.keys(localStorage).forEach(key => {
-      if (key.startsWith('habits_')) {
+      if (key.startsWith(`habits_${userName}_`)) {
         localStorage.removeItem(key);
       }
     });
@@ -191,11 +191,14 @@ const ProgressGraph = () => {
       transition={{ duration: 0.5, delay: 0.6 }}
     >
       <Paper
-        elevation={3}
+        elevation={8}
         sx={{
           p: 3,
           mb: 3,
           borderRadius: 3,
+          background: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(10px)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
         }}
       >
         <Box display="flex" alignItems="center" justifyContent="space-between" mb={3} flexWrap="wrap" gap={2}>

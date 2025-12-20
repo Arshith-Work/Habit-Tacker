@@ -1,12 +1,12 @@
-import { Container, CssBaseline, ThemeProvider, createTheme, Box, Typography, Link } from '@mui/material';
+import { Container, CssBaseline, ThemeProvider, createTheme, Box, Typography, Link, Button } from '@mui/material';
 import { useState, useEffect } from 'react';
-import Greeting from './components/Greeting';
+import WelcomeScreen from './components/WelcomeScreen';
 import MemoryLogger from './components/MemoryLogger';
-import Questionnaire from './components/Questionnaire';
 import ProgressGraph from './components/ProgressGraph';
 import HollaCharacter from './components/HollaCharacter';
 import HabitCheckbox from './components/HabitCheckbox';
 import GitHubIcon from '@mui/icons-material/GitHub';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 const theme = createTheme({
   palette: {
@@ -52,12 +52,38 @@ const theme = createTheme({
 });
 
 function App() {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loginMode, setLoginMode] = useState('initial');
   const [habitProgress, setHabitProgress] = useState(0);
   const [hollaMood, setHollaMood] = useState('happy');
   const [hollaMessage, setHollaMessage] = useState("Let's build great habits together!");
 
+  // Check for existing user on mount
   useEffect(() => {
-    // Update Holla's mood and message based on habit progress
+    const savedUser = localStorage.getItem('habitTracker_currentUser');
+    if (savedUser) {
+      setCurrentUser(savedUser);
+      // User exists but not authenticated yet - require PIN login
+      setIsAuthenticated(false);
+      setLoginMode('login');
+    }
+  }, []);
+
+  // Handle successful login
+  const handleLoginSuccess = (name) => {
+    setCurrentUser(name);
+    setIsAuthenticated(true);
+  };
+
+  // Handle logout
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setLoginMode('login');
+  };
+
+  // Update Holla's mood and message based on habit progress
+  useEffect(() => {
     if (habitProgress === 100) {
       setHollaMood('excited');
       setHollaMessage("🎉 WOW! You completed everything! You're amazing!");
@@ -80,46 +106,149 @@ function App() {
     setHabitProgress(progress);
   };
 
-  const handleQuestionnaireComplete = (answers) => {
-    console.log('Questionnaire completed:', answers);
-  };
+  // Show welcome screen if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <WelcomeScreen onLoginSuccess={handleLoginSuccess} />
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: 4 }}>
-        <Container maxWidth="xl">
-          <Greeting />
+      <Box 
+        sx={{ 
+          minHeight: '100vh', 
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          py: 4,
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Decorative background circles */}
+        {[...Array(3)].map((_, i) => (
+          <Box
+            key={i}
+            sx={{
+              position: 'absolute',
+              width: `${200 + i * 100}px`,
+              height: `${200 + i * 100}px`,
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.05)',
+              top: `${-50 + i * 30}%`,
+              right: `${-10 + i * 20}%`,
+              pointerEvents: 'none',
+            }}
+          />
+        ))}
+
+        <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1 }}>
+          {/* Header */}
+          <Box 
+            sx={{ 
+              mb: 4, 
+              textAlign: 'center', 
+              position: 'relative',
+              background: 'rgba(255,255,255,0.95)',
+              backdropFilter: 'blur(10px)',
+              borderRadius: 4,
+              p: 3,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+            }}
+          >
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+              <HollaCharacter mood={hollaMood} />
+            </Box>
+            
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 'bold',
+                color: '#333',
+                mb: 1,
+              }}
+            >
+              Welcome back, {currentUser}! 👋
+            </Typography>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                color: '#667eea',
+                fontWeight: 500,
+                mb: 2,
+              }}
+            >
+              {hollaMessage}
+            </Typography>
+            
+            {/* Logout Button */}
+            <Button
+              variant="outlined"
+              startIcon={<LogoutIcon />}
+              onClick={handleLogout}
+              sx={{
+                position: 'absolute',
+                right: 16,
+                top: 16,
+                borderRadius: 3,
+                textTransform: 'none',
+                borderColor: '#667eea',
+                color: '#667eea',
+                fontWeight: 600,
+                '&:hover': {
+                  borderColor: '#764ba2',
+                  background: 'rgba(102,126,234,0.1)',
+                  transform: 'translateY(-2px)',
+                },
+                transition: 'all 0.3s ease',
+              }}
+            >
+              Logout
+            </Button>
+          </Box>
           
-          <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', lg: '300px 1fr' }, mb: 3 }}>
-            {/* Holla Character - Left Side */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              <HollaCharacter mood={hollaMood} message={hollaMessage} />
-            </Box>
-
-            {/* Main Content - Right Side */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              {/* Habit Checkbox */}
-              <HabitCheckbox onProgressUpdate={handleProgressUpdate} />
-              
-              {/* Daily Memories */}
-              <MemoryLogger />
-            </Box>
+          {/* Main Content Grid */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            {/* Habit Checkbox */}
+            <HabitCheckbox onProgressUpdate={handleProgressUpdate} userName={currentUser} />
+            
+            {/* Daily Memories */}
+            <MemoryLogger userName={currentUser} />
+            
+            {/* Progress Graph */}
+            <ProgressGraph userName={currentUser} />
           </Box>
 
-          {/* Progress Graph - Full Width */}
-          <Box sx={{ mb: 3 }}>
-            <ProgressGraph />
-          </Box>
-
-          <Box sx={{ mt: 4, textAlign: 'center' }}>
+          {/* Footer */}
+          <Box 
+            sx={{ 
+              mt: 4, 
+              textAlign: 'center',
+              background: 'rgba(255,255,255,0.95)',
+              backdropFilter: 'blur(10px)',
+              borderRadius: 3,
+              p: 2,
+            }}
+          >
             <Typography variant="body2" color="text.secondary">
               Built with ❤️ for better habits |{' '}
               <Link
-                href="https://github.com/arshithinjaaz/habit-tracker"
+                href="https://github.com"
                 target="_blank"
                 rel="noopener"
-                sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
+                sx={{ 
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  gap: 0.5,
+                  color: '#667eea',
+                  textDecoration: 'none',
+                  '&:hover': {
+                    textDecoration: 'underline',
+                  },
+                }}
               >
                 <GitHubIcon fontSize="small" />
                 View on GitHub

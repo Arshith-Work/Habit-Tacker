@@ -17,7 +17,7 @@ import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 
-const HabitCheckbox = ({ onProgressUpdate }) => {
+const HabitCheckbox = ({ onProgressUpdate, userName }) => {
   const defaultHabits = [
     { id: 'exercise', label: '🏃‍♀️ Exercise (30 min)', category: 'Health' },
     { id: 'water', label: '💧 Drink 8 glasses of water', category: 'Health' },
@@ -34,7 +34,7 @@ const HabitCheckbox = ({ onProgressUpdate }) => {
   const [habits, setHabits] = useState(() => {
     try {
       const today = new Date().toDateString();
-      const saved = localStorage.getItem(`habits_${today}`);
+      const saved = localStorage.getItem(`habits_${userName}_${today}`);
       if (saved) {
         return JSON.parse(saved);
       }
@@ -53,7 +53,7 @@ const HabitCheckbox = ({ onProgressUpdate }) => {
   useEffect(() => {
     const handleReset = () => {
       const today = new Date().toDateString();
-      const saved = localStorage.getItem(`habits_${today}`);
+      const saved = localStorage.getItem(`habits_${userName}_${today}`);
       if (!saved) {
         setHabits(defaultHabits.map(h => ({ ...h, completed: false })));
       }
@@ -61,16 +61,16 @@ const HabitCheckbox = ({ onProgressUpdate }) => {
 
     window.addEventListener('habitsReset', handleReset);
     return () => window.removeEventListener('habitsReset', handleReset);
-  }, [defaultHabits]);
+  }, [defaultHabits, userName]);
 
   useEffect(() => {
     const today = new Date().toDateString();
-    localStorage.setItem(`habits_${today}`, JSON.stringify(habits));
+    localStorage.setItem(`habits_${userName}_${today}`, JSON.stringify(habits));
     
     if (onProgressUpdate) {
       onProgressUpdate(completionPercentage);
     }
-  }, [habits, completionPercentage, onProgressUpdate]);
+  }, [habits, completionPercentage, onProgressUpdate, userName]);
 
   const handleToggle = (habitId) => {
     setHabits(prev =>
@@ -98,11 +98,13 @@ const HabitCheckbox = ({ onProgressUpdate }) => {
       transition={{ duration: 0.5 }}
     >
       <Paper
-        elevation={3}
+        elevation={8}
         sx={{
           p: 3,
           borderRadius: 3,
-          background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+          background: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(10px)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
         }}
       >
         {/* Header */}

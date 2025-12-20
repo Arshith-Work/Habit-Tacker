@@ -20,9 +20,9 @@ import TodayIcon from '@mui/icons-material/Today';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 
-const MemoryLogger = () => {
+const MemoryLogger = ({ userName }) => {
   const [memories, setMemories] = useState(() => {
-    const saved = localStorage.getItem('memories');
+    const saved = localStorage.getItem(`memories_${userName}`);
     return saved ? JSON.parse(saved) : [];
   });
   const [newMemory, setNewMemory] = useState('');
@@ -41,7 +41,7 @@ const MemoryLogger = () => {
       };
       const updatedMemories = [memory, ...memories];
       setMemories(updatedMemories);
-      localStorage.setItem('memories', JSON.stringify(updatedMemories));
+      localStorage.setItem(`memories_${userName}`, JSON.stringify(updatedMemories));
       setNewMemory('');
 
       // Show success animation
@@ -50,7 +50,7 @@ const MemoryLogger = () => {
 
       // Reset today's habits after adding memory
       const today = new Date().toDateString();
-      localStorage.removeItem(`habits_${today}`);
+      localStorage.removeItem(`habits_${userName}_${today}`);
       
       // Dispatch custom event to notify other components
       window.dispatchEvent(new Event('habitsReset'));
@@ -60,7 +60,7 @@ const MemoryLogger = () => {
   const handleDeleteMemory = (id) => {
     const updatedMemories = memories.filter((m) => m.id !== id);
     setMemories(updatedMemories);
-    localStorage.setItem('memories', JSON.stringify(updatedMemories));
+    localStorage.setItem(`memories_${userName}`, JSON.stringify(updatedMemories));
   };
 
   const handleKeyPress = (e) => {
@@ -123,11 +123,14 @@ const MemoryLogger = () => {
       </AnimatePresence>
 
       <Paper
-        elevation={3}
+        elevation={8}
         sx={{
           p: 3,
           mb: 3,
           borderRadius: 3,
+          background: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(10px)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
         }}
       >
         <Box display="flex" alignItems="center" gap={1} mb={3}>
