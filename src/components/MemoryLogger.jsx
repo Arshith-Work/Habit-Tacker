@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Box,
   Paper,
@@ -14,7 +14,12 @@ import {
   Avatar,
   Collapse,
   InputAdornment,
-  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -28,64 +33,27 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import SearchIcon from '@mui/icons-material/Search';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
-import CloudDoneIcon from '@mui/icons-material/CloudDone';
-import CloudOffIcon from '@mui/icons-material/CloudOff';
-import { firestore } from '../config/firebase';
-import { collection, addDoc, getDocs, deleteDoc, doc, query, where, orderBy } from 'firebase/firestore';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import SettingsIcon from '@mui/icons-material/Settings';
+import { sendMemoryToWhatsApp, getWhatsAppSettings, updateWhatsAppSettings } from '../utils/whatsapp';
 
 const MemoryLogger = ({ userName }) => {
-  const [memories, setMemories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [memories, setMemories] = useState(() => {
+    const saved = localStorage.getItem(`memories_${userName}`);
+    return saved ? JSON.parse(saved) : [];
+  });
   const [newMemory, setNewMemory] = useState('');
   const [expandedFolders, setExpandedFolders] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
-  const [syncStatus, setSyncStatus] = useState('synced'); // 'syncing', 'synced', 'offline'
+  const [sendToWhatsApp, setSendToWhatsApp] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+  
+  const whatsappSettings = getWhatsAppSettings();
+  const [tempPhone, setTempPhone] = useState(whatsappSettings.phoneNumber);
+  const [tempEnabled, setTempEnabled] = useState(whatsappSettings.enabled);
 
   const MotionDiv = motion.div;
-
-  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
-
-  // Load memories from Firestore on mount
-  useEffect(() => {
-    const loadMemories = async () => {
-      try {
-        // Try to load from Firestore
-        const q = query(
-          collection(firestore, 'memories'),
-          where('userName', '==', userName),
-          orderBy('createdAt', 'desc')
-        );
-        
-        const querySnapshot = await getDocs(q);
-        const firestoreMemories = querySnapshot.docs.map(doc => ({
-          firestoreId: doc.id,
-          ...doc.data()
-        }));
-        
-        if (firestoreMemories.length > 0) {
-          setMemories(firestoreMemories);
-          // Update localStorage with cloud data
-          localStorage.setItem(`memories_${userName}`, JSON.stringify(firestoreMemories));
-          setSyncStatus('synced');
-        } else {
-          // Fallback to localStorage if no cloud data
-          const saved = localStorage.getItem(`memories_${userName}`);
-          setMemories(saved ? JSON.parse(saved) : []);
-          setSyncStatus('synced');
-        }
-      } catch (error) {
-        console.error('Error loading from Firestore:', error);
-        // Fallback to localStorage
-        const saved = localStorage.getItem(`memories_${userName}`);
-        setMemories(saved ? JSON.parse(saved) : []);
-        setSyncStatus('offline');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadMemories();
-  }, [userName]);
 
   // Group memories by month and year
   const groupMemoriesByMonth = () => {
@@ -123,7 +91,7 @@ const MemoryLogger = ({ userName }) => {
     URL.revokeObjectURL(url);
   };
 
-  const handleAddMemory = async () => {
+  const handleAddMemory = () => {
     if (newMemory.trim()) {
       const now = new Date();
       const memory = {
@@ -131,64 +99,32 @@ const MemoryLogger = ({ userName }) => {
         text: newMemory,
         date: now.toISOString(),
         timestamp: now.toLocaleTimeString(),
-        userName: userName,
-        createdAt: now.toISOString()
       };
-
-      try {
-        setSyncStatus('syncing');
-        // Save to Firestore cloud
-        await addDoc(collection(firestore, 'memories'), memory);
-        
-        // Also save to localStorage as backup
-        const updatedMemories = [memory, ...memories];
-        setMemories(updatedMemories);
-        localStorage.setItem(`memories_${userName}`, JSON.stringify(updatedMemories));
-        
-        setNewMemory('');
-        setShowSuccessAnimation(true);
-        setTimeout(() => setShowSuccessAnimation(false), 2000);
-        setSyncStatus('synced');
-
-        // Reset today's habits
-        const today = new Date().toDateString();
-        localStorage.removeItem(`habits_${userName}_${today}`);
-        window.dispatchEvent(new Event('habitsReset'));
-        
-      } catch (error) {
-        console.error('Error saving to Firestore:', error);
-        // Fallback to localStorage only if cloud fails
-        const updatedMemories = [memory, ...memories];
-        setMemories(updatedMemories);
-        localStorage.setItem(`memories_${userName}`, JSON.stringify(updatedMemories));
-        setSyncStatus('offline');
-        alert('Saved locally. Cloud backup failed - check internet connection.');
-        setNewMemory('');
-        setShowSuccessAnimation(true);
-        setTimeout(() => setShowSuccessAnimation(false), 2000);
+      
+      const updatedMemories = [memory, ...memories];
+      setMemories(updatedMemories);
+      localStorage.setItem(`memories_${userName}`, JSON.stringify(updatedMemories));
+      
+      // Send to WhatsApp if enabled
+      if (sendToWhatsApp && whatsappSettings.enabled) {
+        sendMemoryToWhatsApp(memory, userName, whatsappSettings.phoneNumber);
       }
+      
+      setNewMemory('');
+      setSendToWhatsApp(false);
+      setShowSuccessAnimation(true);
+      setTimeout(() => setShowSuccessAnimation(false), 2000);
+
+      const today = new Date().toDateString();
+      localStorage.removeItem(`habits_${userName}_${today}`);
+      window.dispatchEvent(new Event('habitsReset'));
     }
   };
 
-  const handleDeleteMemory = async (id, firestoreId) => {
-    try {
-      // Delete from Firestore if firestoreId exists
-      if (firestoreId) {
-        await deleteDoc(doc(firestore, 'memories', firestoreId));
-      }
-      
-      // Delete from local state and localStorage
-      const updatedMemories = memories.filter((m) => m.id !== id);
-      setMemories(updatedMemories);
-      localStorage.setItem(`memories_${userName}`, JSON.stringify(updatedMemories));
-    } catch (error) {
-      console.error('Error deleting from Firestore:', error);
-      alert('Failed to delete from cloud. Removed locally.');
-      // Still remove from local state even if cloud fails
-      const updatedMemories = memories.filter((m) => m.id !== id);
-      setMemories(updatedMemories);
-      localStorage.setItem(`memories_${userName}`, JSON.stringify(updatedMemories));
-    }
+  const handleDeleteMemory = (id) => {
+    const updatedMemories = memories.filter((m) => m.id !== id);
+    setMemories(updatedMemories);
+    localStorage.setItem(`memories_${userName}`, JSON.stringify(updatedMemories));
   };
 
   const handleKeyPress = (e) => {
@@ -198,14 +134,11 @@ const MemoryLogger = ({ userName }) => {
     }
   };
 
-  if (loading) {
-    return (
-      <Paper sx={{ p: 3, textAlign: 'center' }}>
-        <CircularProgress />
-        <Typography sx={{ mt: 2 }}>Loading memories from cloud...</Typography>
-      </Paper>
-    );
-  }
+  const handleSaveSettings = () => {
+    updateWhatsAppSettings(tempPhone, tempEnabled);
+    setSettingsOpen(false);
+    window.location.reload(); // Reload to refresh settings
+  };
 
   return (
     <MotionDiv
@@ -275,30 +208,14 @@ const MemoryLogger = ({ userName }) => {
             Daily Memories
           </Typography>
           <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 1 }}>
-            {syncStatus === 'syncing' && (
-              <>
-                <CircularProgress size={20} />
-                <Typography variant="caption" color="text.secondary">
-                  Syncing...
-                </Typography>
-              </>
-            )}
-            {syncStatus === 'synced' && (
-              <>
-                <CloudDoneIcon color="success" />
-                <Typography variant="caption" color="success.main">
-                  Synced
-                </Typography>
-              </>
-            )}
-            {syncStatus === 'offline' && (
-              <>
-                <CloudOffIcon color="error" />
-                <Typography variant="caption" color="error.main">
-                  Offline
-                </Typography>
-              </>
-            )}
+            <Button
+              startIcon={<SettingsIcon />}
+              onClick={() => setSettingsOpen(true)}
+              variant="outlined"
+              size="small"
+            >
+              WhatsApp
+            </Button>
             <Button
               startIcon={<FileDownloadIcon />}
               onClick={handleExport}
@@ -344,6 +261,35 @@ const MemoryLogger = ({ userName }) => {
               'aria-label': 'Memory text input',
             }}
           />
+          {whatsappSettings.enabled && (
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={sendToWhatsApp}
+                  onChange={(e) => setSendToWhatsApp(e.target.checked)}
+                  icon={<WhatsAppIcon />}
+                  checkedIcon={<WhatsAppIcon />}
+                  sx={{
+                    color: '#25D366',
+                    '&.Mui-checked': {
+                      color: '#25D366',
+                    },
+                  }}
+                />
+              }
+              label={
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Typography variant="body2">Send to WhatsApp</Typography>
+                  <Chip
+                    label={whatsappSettings.phoneNumber}
+                    size="small"
+                    sx={{ fontSize: '0.7rem' }}
+                  />
+                </Box>
+              }
+              sx={{ mb: 1 }}
+            />
+          )}
           <Button
             variant="contained"
             color="primary"
@@ -513,7 +459,7 @@ const MemoryLogger = ({ userName }) => {
                                 </Box>
                                 <IconButton
                                   aria-label="delete memory"
-                                  onClick={() => handleDeleteMemory(memory.id, memory.firestoreId)}
+                                  onClick={() => handleDeleteMemory(memory.id)}
                                   sx={{
                                     color: 'error.main',
                                     '&:hover': {
@@ -547,6 +493,54 @@ const MemoryLogger = ({ userName }) => {
           )}
         </Box>
       </Paper>
+
+      {/* WhatsApp Settings Dialog */}
+      <Dialog open={settingsOpen} onClose={() => setSettingsOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          <Box display="flex" alignItems="center" gap={1}>
+            <WhatsAppIcon sx={{ color: '#25D366' }} />
+            <Typography variant="h6">WhatsApp Settings</Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth
+            label="WhatsApp Number"
+            placeholder="+1 234 567 8900"
+            value={tempPhone}
+            onChange={(e) => setTempPhone(e.target.value)}
+            helperText="Include country code (e.g., +91 for India, +1 for USA)"
+            sx={{ mt: 2, mb: 2 }}
+            InputProps={{
+              startAdornment: <span style={{ marginRight: 8 }}>📱</span>
+            }}
+          />
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={tempEnabled}
+                onChange={(e) => setTempEnabled(e.target.checked)}
+                sx={{
+                  color: '#25D366',
+                  '&.Mui-checked': {
+                    color: '#25D366',
+                  },
+                }}
+              />
+            }
+            label="Enable WhatsApp memory backup"
+          />
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
+            When enabled, you can choose to send each memory to your WhatsApp number as a backup.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSettingsOpen(false)}>Cancel</Button>
+          <Button onClick={handleSaveSettings} variant="contained" sx={{ bgcolor: '#25D366' }}>
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
     </MotionDiv>
   );
 };

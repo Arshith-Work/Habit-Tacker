@@ -5,7 +5,9 @@ import {
   Box, 
   Typography,
   Alert,
-  IconButton
+  IconButton,
+  Checkbox,
+  FormControlLabel
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
@@ -20,6 +22,8 @@ const WelcomeScreen = ({ onLoginSuccess }) => {
   const [currentStep, setCurrentStep] = useState('choice'); // 'choice', 'name', 'pin', 'confirm'
   const [error, setError] = useState('');
   const [isReturningUser, setIsReturningUser] = useState(null);
+  const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [enableWhatsApp, setEnableWhatsApp] = useState(false);
 
   const handleUserTypeSelection = (isReturning) => {
     setIsReturningUser(isReturning);
@@ -91,6 +95,13 @@ const WelcomeScreen = ({ onLoginSuccess }) => {
       return;
     }
     localStorage.setItem(`habitTracker_pin_${name}`, pin);
+    
+    // Save WhatsApp settings if provided
+    if (enableWhatsApp && whatsappNumber.trim()) {
+      localStorage.setItem('whatsappNumber', whatsappNumber);
+      localStorage.setItem('whatsappEnabled', 'true');
+    }
+    
     onLoginSuccess(name);
   };
 
@@ -376,6 +387,53 @@ const WelcomeScreen = ({ onLoginSuccess }) => {
                     },
                   }}
                 />
+
+                {!isReturningUser && (
+                  <>
+                    <TextField
+                      fullWidth
+                      variant="outlined"
+                      label="WhatsApp Number (Optional)"
+                      placeholder="+1 234 567 8900"
+                      value={whatsappNumber}
+                      onChange={(e) => setWhatsappNumber(e.target.value)}
+                      helperText="Include country code (e.g., +91 for India, +1 for USA)"
+                      InputProps={{
+                        startAdornment: <span style={{ marginRight: 8 }}>📱</span>
+                      }}
+                      sx={{
+                        mb: 2,
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                          '&:hover fieldset': {
+                            borderColor: '#667eea',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#667eea',
+                            borderWidth: 2,
+                          },
+                        },
+                      }}
+                    />
+
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={enableWhatsApp}
+                          onChange={(e) => setEnableWhatsApp(e.target.checked)}
+                          sx={{
+                            color: '#667eea',
+                            '&.Mui-checked': {
+                              color: '#667eea',
+                            },
+                          }}
+                        />
+                      }
+                      label="📲 Enable WhatsApp memory backup"
+                      sx={{ mb: 2 }}
+                    />
+                  </>
+                )}
 
                 <Button
                   fullWidth
