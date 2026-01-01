@@ -10,7 +10,8 @@ export const sendMemoryToWhatsApp = (memory, userName, phoneNumber) => {
 
   // Format phone number (only allow + at the beginning, remove all non-digits elsewhere)
   const hasPlus = phoneNumber.trim().startsWith('+');
-  const cleanPhone = (hasPlus ? '+' : '') + phoneNumber.replace(/[^\d]/g, '');
+  const digitsOnly = phoneNumber.replace(/\D/g, '');
+  const cleanPhone = (hasPlus ? '+' : '') + digitsOnly;
   
   // Format the date nicely
   const date = new Date(memory.date);
