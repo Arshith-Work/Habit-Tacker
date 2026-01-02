@@ -31,7 +31,6 @@ const quotesDatabase = {
     "Love is patient, love is kind.",
     "Love is the greatest refreshment in life.",
     "Where love is, there God is also.",
-    "Love yourself first and everything else falls into line.",
   ],
   Life: [
     "Life is what happens when you're busy making other plans.",
@@ -39,7 +38,6 @@ const quotesDatabase = {
     "Life is really simple, but we insist on making it complicated.",
     "In the end, it's not the years in your life that count. It's the life in your years.",
     "Life is a journey, not a destination.",
-    "Life is 10% what happens to you and 90% how you react to it.",
     "The only impossible journey is the one you never begin.",
     "Life isn't about finding yourself. Life is about creating yourself.",
     "Your time is limited, don't waste it living someone else's life.",
@@ -58,7 +56,6 @@ const quotesDatabase = {
     "Life is like riding a bicycle. To keep your balance, you must keep moving.",
     "Life is a long lesson in humility.",
     "The unexamined life is not worth living.",
-    "Life is 10% what happens to us and 90% how we respond to it.",
     "Life shrinks or expands in proportion to one's courage.",
     "In three words I can sum up everything I've learned about life: it goes on.",
   ],
@@ -88,7 +85,6 @@ const quotesDatabase = {
     "Patience is the art of concealing your impatience.",
     "The practice of patience guards us against losing our presence of mind.",
     "Patience is the best remedy for every trouble.",
-    "He that can have patience can have what he will.",
   ],
   Time: [
     "Time is what we want most, but what we use worst.",
@@ -115,10 +111,12 @@ const quotesDatabase = {
     "Better three hours too soon than a minute too late.",
     "Time spent with family is worth every second.",
     "The key is in not spending time, but in investing it.",
-    "Time is an illusion.",
     "Make use of time, let not advantage slip.",
   ],
 };
+
+// Create motion component outside to avoid recreating on every render
+const MotionPaper = motion(Paper);
 
 const QuoteOfTheDay = () => {
   // Get quote based on day of year to ensure same quote throughout the day
@@ -139,8 +137,6 @@ const QuoteOfTheDay = () => {
     
     return selectedQuote;
   }, []);
-
-  const MotionPaper = motion(Paper);
 
   const getCategoryColor = (category) => {
     const colors = {
@@ -204,7 +200,7 @@ const QuoteOfTheDay = () => {
           position: 'relative',
           fontWeight: 500,
           '&::before': {
-            content: '"""',
+            content: '"\u201C"',
             position: 'absolute',
             left: -16,
             top: -8,
