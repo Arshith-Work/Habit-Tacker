@@ -22,10 +22,6 @@ const AdminHabits = () => {
     bestStreak: 0,
   });
 
-  useEffect(() => {
-    loadHabitStats();
-  }, []);
-
   const loadHabitStats = () => {
     const allKeys = Object.keys(localStorage);
     
@@ -96,6 +92,10 @@ const AdminHabits = () => {
       bestStreak,
     });
   };
+
+  useEffect(() => {
+    loadHabitStats();
+  }, []);
 
   const getPerformanceColor = (percentage) => {
     if (percentage >= 80) return '#4caf50'; // Green

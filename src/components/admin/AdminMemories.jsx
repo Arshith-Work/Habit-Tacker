@@ -32,23 +32,6 @@ const AdminMemories = () => {
   const [deleteDialog, setDeleteDialog] = useState({ open: false, memory: null, userKey: null });
   const [successMessage, setSuccessMessage] = useState('');
 
-  useEffect(() => {
-    loadAllMemories();
-  }, []);
-
-  useEffect(() => {
-    if (searchQuery) {
-      const filtered = allMemories.filter(
-        (item) =>
-          item.memory.text?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.userName.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredMemories(filtered);
-    } else {
-      setFilteredMemories(allMemories);
-    }
-  }, [searchQuery, allMemories]);
-
   const loadAllMemories = () => {
     const allKeys = Object.keys(localStorage);
     const memoryKeys = allKeys.filter((key) => key.startsWith('memories_'));
@@ -80,6 +63,23 @@ const AdminMemories = () => {
     setAllMemories(memories);
     setFilteredMemories(memories);
   };
+
+  useEffect(() => {
+    loadAllMemories();
+  }, []);
+
+  useEffect(() => {
+    if (searchQuery) {
+      const filtered = allMemories.filter(
+        (item) =>
+          item.memory.text?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.userName.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredMemories(filtered);
+    } else {
+      setFilteredMemories(allMemories);
+    }
+  }, [searchQuery, allMemories]);
 
   const handleDeleteMemory = (userKey, memory) => {
     setDeleteDialog({ open: true, memory, userKey });

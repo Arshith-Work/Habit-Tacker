@@ -34,7 +34,7 @@ export const isAdminAuthenticated = () => {
     }
     
     return session.authenticated === true;
-  } catch (error) {
+  } catch {
     return false;
   }
 };

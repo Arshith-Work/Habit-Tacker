@@ -29,15 +29,10 @@ const AdminSettings = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  useEffect(() => {
-    calculateDataSize();
-    checkEmailBackupStatus();
-  }, []);
-
   const calculateDataSize = () => {
     let totalSize = 0;
     for (let key in localStorage) {
-      if (localStorage.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(localStorage, key)) {
         totalSize += localStorage[key].length + key.length;
       }
     }
@@ -59,7 +54,7 @@ const AdminSettings = () => {
             email: settings.email || 'Not set',
             lastBackup: settings.lastBackupDate || 'Never',
           };
-        } catch (error) {
+        } catch {
           return null;
         }
       })
@@ -68,10 +63,15 @@ const AdminSettings = () => {
     setEmailBackupStatus(emailSettings);
   };
 
+  useEffect(() => {
+    calculateDataSize();
+    checkEmailBackupStatus();
+  }, []);
+
   const handleExportAllData = () => {
     const allData = {};
     for (let key in localStorage) {
-      if (localStorage.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(localStorage, key)) {
         try {
           allData[key] = JSON.parse(localStorage[key]);
         } catch {
