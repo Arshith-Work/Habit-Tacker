@@ -7,6 +7,11 @@ const ADMIN_SESSION_KEY = 'admin_session';
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'admin123';
 const SESSION_DURATION = 60 * 60 * 1000; // 1 hour
 
+// Warn if using default password
+if (ADMIN_PASSWORD === 'admin123') {
+  console.warn('⚠️ WARNING: Using default admin password. Please set VITE_ADMIN_PASSWORD environment variable for production.');
+}
+
 export const checkAdminPassword = (password) => {
   return password === ADMIN_PASSWORD;
 };

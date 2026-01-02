@@ -91,11 +91,13 @@ const AdminMemories = () => {
       const memories = JSON.parse(localStorage.getItem(userKey) || '[]');
       const updatedMemories = memories.filter(
         (m) => {
-          // Use id if available, otherwise fall back to timestamp comparison
+          // Use id if available (most reliable)
           if (m.id && memory.id) {
             return m.id !== memory.id;
           }
-          return m.timestamp !== memory.timestamp;
+          // Fallback to comparing both timestamp and text for uniqueness
+          return !(m.timestamp === memory.timestamp && 
+                   (m.text || m.content) === (memory.text || memory.content));
         }
       );
       localStorage.setItem(userKey, JSON.stringify(updatedMemories));

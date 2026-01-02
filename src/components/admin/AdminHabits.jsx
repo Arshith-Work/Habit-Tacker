@@ -43,8 +43,10 @@ const AdminHabits = () => {
             const dateString = keyParts.slice(2).join('_');
             const habitDate = new Date(dateString);
             
-            // Validate the date
-            if (!isNaN(habitDate.getTime()) && habitDate >= thirtyDaysAgo) {
+            // Validate the date - must be valid, not in the future, and within 30 days
+            if (!isNaN(habitDate.getTime()) && 
+                habitDate <= now && 
+                habitDate >= thirtyDaysAgo) {
               habits.forEach((habit) => {
                 if (!habitData[habit.id]) {
                   habitData[habit.id] = {
