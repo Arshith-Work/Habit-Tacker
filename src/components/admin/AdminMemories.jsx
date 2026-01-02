@@ -90,7 +90,13 @@ const AdminMemories = () => {
     try {
       const memories = JSON.parse(localStorage.getItem(userKey) || '[]');
       const updatedMemories = memories.filter(
-        (m) => m.id !== memory.id && m.timestamp !== memory.timestamp
+        (m) => {
+          // Use id if available, otherwise fall back to timestamp comparison
+          if (m.id && memory.id) {
+            return m.id !== memory.id;
+          }
+          return m.timestamp !== memory.timestamp;
+        }
       );
       localStorage.setItem(userKey, JSON.stringify(updatedMemories));
       

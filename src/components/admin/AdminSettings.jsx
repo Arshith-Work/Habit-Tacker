@@ -106,11 +106,18 @@ const AdminSettings = () => {
 
   const confirmClearData = () => {
     try {
-      // Keep only essential data like dark mode preference
+      // Keep only essential data like dark mode preference and admin session
       const darkMode = localStorage.getItem('darkMode');
+      const adminSession = sessionStorage.getItem('admin_session');
+      
       localStorage.clear();
+      
       if (darkMode) {
         localStorage.setItem('darkMode', darkMode);
+      }
+      // Restore admin session to prevent logout
+      if (adminSession) {
+        sessionStorage.setItem('admin_session', adminSession);
       }
       
       setSuccessMessage('All data cleared successfully. Admin session maintained.');

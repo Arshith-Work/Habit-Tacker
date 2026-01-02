@@ -84,23 +84,27 @@ const AdminDashboard = () => {
       }
     });
 
-    // Calculate account age
-    const currentUser = localStorage.getItem('habitTracker_currentUser');
-    const userPinKey = `habitTracker_pin_${currentUser}`;
-    const pinData = localStorage.getItem(userPinKey);
+    // Calculate account age - show oldest account
     let accountAge = 0;
+    const pinKeys = allKeys.filter(key => key.startsWith('habitTracker_pin_'));
     
-    if (pinData) {
+    pinKeys.forEach(key => {
       try {
-        const { createdAt } = JSON.parse(pinData);
-        if (createdAt) {
-          const accountDate = new Date(createdAt);
-          accountAge = Math.floor((now - accountDate) / (1000 * 60 * 60 * 24));
+        const pinData = localStorage.getItem(key);
+        if (pinData) {
+          const { createdAt } = JSON.parse(pinData);
+          if (createdAt) {
+            const accountDate = new Date(createdAt);
+            const age = Math.floor((now - accountDate) / (1000 * 60 * 60 * 24));
+            if (age > accountAge) {
+              accountAge = age;
+            }
+          }
         }
       } catch (error) {
         console.error('Error parsing pin data:', error);
       }
-    }
+    });
 
     setStats({
       totalMemories,

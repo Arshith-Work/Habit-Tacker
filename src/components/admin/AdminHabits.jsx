@@ -37,26 +37,29 @@ const AdminHabits = () => {
         try {
           const habits = JSON.parse(localStorage.getItem(key) || '[]');
           
-          // Extract date from key
+          // Extract date from key - format is typically "habits_userName_dateString"
           const keyParts = key.split('_');
-          const dateString = keyParts.slice(2).join('_');
-          const habitDate = new Date(dateString);
-
-          if (habitDate >= thirtyDaysAgo) {
-            habits.forEach((habit) => {
-              if (!habitData[habit.id]) {
-                habitData[habit.id] = {
-                  label: habit.label,
-                  category: habit.category,
-                  completions: 0,
-                  total: 0,
-                };
-              }
-              habitData[habit.id].total++;
-              if (habit.completed) {
-                habitData[habit.id].completions++;
-              }
-            });
+          if (keyParts.length > 2) {
+            const dateString = keyParts.slice(2).join('_');
+            const habitDate = new Date(dateString);
+            
+            // Validate the date
+            if (!isNaN(habitDate.getTime()) && habitDate >= thirtyDaysAgo) {
+              habits.forEach((habit) => {
+                if (!habitData[habit.id]) {
+                  habitData[habit.id] = {
+                    label: habit.label,
+                    category: habit.category,
+                    completions: 0,
+                    total: 0,
+                  };
+                }
+                habitData[habit.id].total++;
+                if (habit.completed) {
+                  habitData[habit.id].completions++;
+                }
+              });
+            }
           }
         } catch (error) {
           console.error('Error parsing habit data:', error);
