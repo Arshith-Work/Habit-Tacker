@@ -37,16 +37,16 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 
 const HabitCheckbox = ({ onProgressUpdate, userName }) => {
   const defaultHabits = [
-    { id: 'exercise', label: '🏃‍♀️ Exercise (30 min)', category: 'Health' },
-    { id: 'water', label: '💧 Drink 8 glasses of water', category: 'Health' },
-    { id: 'reading', label: '📚 Read for 20 minutes', category: 'Learning' },
-    { id: 'meditation', label: '🧘‍♀️ Meditate (10 min)', category: 'Wellness' },
-    { id: 'sleep', label: '😴 Sleep 7-8 hours', category: 'Health' },
-    { id: 'gratitude', label: '🙏 Practice gratitude', category: 'Wellness' },
-    { id: 'healthy-meal', label: '🥗 Eat healthy meals', category: 'Health' },
-    { id: 'social', label: '👥 Connect with loved ones', category: 'Social' },
-    { id: 'learn', label: '💡 Learn something new', category: 'Learning' },
-    { id: 'organize', label: '📝 Organize workspace', category: 'Productivity' },
+    { id: 'coffee', label: '☕ Had coffee more than usual?', category: 'Health' },
+    { id: 'good-deed', label: '✨ Did any good thing?', category: 'Wellness' },
+    { id: 'sleep', label: '😴 Slept well?', category: 'Health' },
+    { id: 'learn', label: '📚 Learned new thing?', category: 'Learning' },
+    { id: 'dirty-work', label: '🔧 Did dirty work?', category: 'Productivity' },
+    { id: 'honest', label: '💯 Been honest?', category: 'Wellness' },
+    { id: 'good-food', label: '🥗 Good food?', category: 'Health' },
+    { id: 'angry', label: '😤 Been angry?', category: 'Wellness' },
+    { id: 'clean', label: '🧹 Cleaned around you?', category: 'Productivity' },
+    { id: 'loved-ones', label: '❤️ Connected with your loved one?', category: 'Social' },
   ];
 
   const [habits, setHabits] = useState(() => {
@@ -267,7 +267,7 @@ const HabitCheckbox = ({ onProgressUpdate, userName }) => {
       <Paper
         elevation={8}
         sx={{
-          p: 3,
+          p: { xs: 2, sm: 3 },
           borderRadius: 3,
           backdropFilter: 'blur(10px)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
@@ -276,19 +276,23 @@ const HabitCheckbox = ({ onProgressUpdate, userName }) => {
         {/* Header with Streak */}
         <Box display="flex" alignItems="center" justifyContent="space-between" mb={2} flexWrap="wrap" gap={2}>
           <Box display="flex" alignItems="center" gap={1}>
-            <EmojiEventsIcon color="primary" sx={{ fontSize: 32 }} />
-            <Typography variant="h5" fontWeight="bold">
+            <EmojiEventsIcon color="primary" sx={{ fontSize: { xs: 28, sm: 32 } }} />
+            <Typography variant="h5" fontWeight="bold" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
               Daily Habits
             </Typography>
           </Box>
-          <Box display="flex" gap={1} alignItems="center">
+          <Box display="flex" gap={1} alignItems="center" flexWrap="wrap">
             {streak > 0 && (
               <Tooltip title={`${streak} day streak!`}>
                 <Chip
                   icon={<LocalFireDepartmentIcon />}
                   label={`${streak} 🔥`}
                   color="error"
-                  sx={{ fontWeight: 'bold' }}
+                  sx={{ 
+                    fontWeight: 'bold',
+                    height: { xs: 36, sm: 32 },
+                    fontSize: { xs: '0.875rem', sm: '0.8125rem' },
+                  }}
                 />
               </Tooltip>
             )}
@@ -296,11 +300,23 @@ const HabitCheckbox = ({ onProgressUpdate, userName }) => {
               <Chip
                 label={`${completedCount}/${totalCount}`}
                 color="primary"
-                sx={{ fontWeight: 'bold' }}
+                sx={{ 
+                  fontWeight: 'bold',
+                  height: { xs: 36, sm: 32 },
+                  fontSize: { xs: '0.875rem', sm: '0.8125rem' },
+                }}
               />
             )}
             <Tooltip title="Add Habit">
-              <IconButton color="primary" onClick={() => setOpenAddDialog(true)} size="small">
+              <IconButton 
+                color="primary" 
+                onClick={() => setOpenAddDialog(true)} 
+                sx={{ 
+                  minWidth: 44,
+                  minHeight: 44,
+                  p: { xs: 1.5, sm: 1 },
+                }}
+              >
                 <AddIcon />
               </IconButton>
             </Tooltip>
@@ -333,16 +349,32 @@ const HabitCheckbox = ({ onProgressUpdate, userName }) => {
         </Box>
 
         {/* Category Filter */}
-        <Box mb={2} display="flex" alignItems="center" gap={1} flexWrap="wrap">
-          <FilterListIcon color="action" fontSize="small" />
+        <Box mb={2} display="flex" alignItems="flex-start" gap={1} flexWrap="wrap">
+          <FilterListIcon color="action" fontSize="small" sx={{ mt: 1 }} />
           <ToggleButtonGroup
             value={filteredCategory}
             exclusive
             onChange={(e, newValue) => newValue && setFilteredCategory(newValue)}
             size="small"
+            sx={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: { xs: 0.5, sm: 0 },
+            }}
           >
             {categories.map(cat => (
-              <ToggleButton key={cat} value={cat} sx={{ textTransform: 'none', px: 2 }}>
+              <ToggleButton 
+                key={cat} 
+                value={cat} 
+                sx={{ 
+                  textTransform: 'none', 
+                  px: { xs: 1.5, sm: 2 },
+                  minHeight: 44,
+                  fontSize: { xs: '0.875rem', sm: '0.8125rem' },
+                  flexGrow: { xs: 0, sm: 0 },
+                  flexShrink: 0,
+                }}
+              >
                 {cat}
               </ToggleButton>
             ))}
@@ -365,8 +397,8 @@ const HabitCheckbox = ({ onProgressUpdate, userName }) => {
                   sx={{
                     borderRadius: 2,
                     mb: 1,
-                    p: { xs: 2, sm: 1 },
-                    minHeight: { xs: 60, sm: 'auto' },
+                    p: { xs: 1.5, sm: 1 },
+                    minHeight: 56,
                     background: habit.completed ? '#f1f8f4' : 'transparent',
                     border: habit.completed ? '2px solid #4CAF50' : '2px solid #f0f0f0',
                     transition: 'all 0.3s ease',
@@ -374,16 +406,23 @@ const HabitCheckbox = ({ onProgressUpdate, userName }) => {
                       background: habit.completed ? '#e8f5e9' : '#fafafa',
                       transform: 'translateX(4px)',
                     },
+                    display: 'flex',
+                    alignItems: 'center',
+                    pr: { xs: 1, sm: 2 },
                   }}
                   secondaryAction={
-                    <Box>
+                    <Box sx={{ display: 'flex', gap: 0.5 }}>
                       <IconButton 
                         size="small" 
                         onClick={() => {
                           setEditingHabit(habit);
                           setOpenEditDialog(true);
                         }}
-                        sx={{ minWidth: { xs: 44, sm: 'auto' }, minHeight: { xs: 44, sm: 'auto' } }}
+                        sx={{ 
+                          minWidth: 44,
+                          minHeight: 44,
+                          p: { xs: 1, sm: 0.75 },
+                        }}
                       >
                         <EditIcon fontSize="small" />
                       </IconButton>
@@ -391,14 +430,18 @@ const HabitCheckbox = ({ onProgressUpdate, userName }) => {
                         size="small" 
                         onClick={() => handleDeleteHabit(habit.id)}
                         color="error"
-                        sx={{ minWidth: { xs: 44, sm: 'auto' }, minHeight: { xs: 44, sm: 'auto' } }}
+                        sx={{ 
+                          minWidth: 44,
+                          minHeight: 44,
+                          p: { xs: 1, sm: 0.75 },
+                        }}
                       >
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </Box>
                   }
                 >
-                  <ListItemIcon>
+                  <ListItemIcon sx={{ minWidth: { xs: 48, sm: 56 } }}>
                     <Checkbox
                       edge="start"
                       checked={habit.completed}
@@ -407,6 +450,8 @@ const HabitCheckbox = ({ onProgressUpdate, userName }) => {
                       checkedIcon={<CheckCircleIcon />}
                       sx={{
                         color: '#bdbdbd',
+                        minWidth: 44,
+                        minHeight: 44,
                         '&.Mui-checked': {
                           color: '#4CAF50',
                         },
@@ -421,6 +466,9 @@ const HabitCheckbox = ({ onProgressUpdate, userName }) => {
                           textDecoration: habit.completed ? 'line-through' : 'none',
                           color: habit.completed ? '#757575' : 'inherit',
                           fontWeight: habit.completed ? 400 : 500,
+                          fontSize: { xs: '0.95rem', sm: '1rem' },
+                          wordBreak: 'break-word',
+                          pr: { xs: 0.5, sm: 1 },
                         }}
                       >
                         {habit.label}
@@ -436,6 +484,8 @@ const HabitCheckbox = ({ onProgressUpdate, userName }) => {
                       fontWeight: 600,
                       fontSize: '0.7rem',
                       mr: 8,
+                      height: 26,
+                      display: { xs: 'none', sm: 'flex' },
                     }}
                   />
                 </ListItem>
@@ -514,9 +564,28 @@ const HabitCheckbox = ({ onProgressUpdate, userName }) => {
             </Select>
           </FormControl>
         </DialogContent>
-        <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 } }}>
-          <Button onClick={() => setOpenAddDialog(false)} sx={{ minHeight: { xs: 44, sm: 'auto' } }}>Cancel</Button>
-          <Button onClick={handleAddHabit} variant="contained" sx={{ minHeight: { xs: 44, sm: 'auto' } }}>Add</Button>
+        <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, gap: 1 }}>
+          <Button 
+            onClick={() => setOpenAddDialog(false)} 
+            sx={{ 
+              minHeight: 44,
+              px: { xs: 2.5, sm: 2 },
+              fontSize: { xs: '1rem', sm: '0.875rem' },
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleAddHabit} 
+            variant="contained" 
+            sx={{ 
+              minHeight: 44,
+              px: { xs: 2.5, sm: 2 },
+              fontSize: { xs: '1rem', sm: '0.875rem' },
+            }}
+          >
+            Add
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -567,9 +636,28 @@ const HabitCheckbox = ({ onProgressUpdate, userName }) => {
             </>
           )}
         </DialogContent>
-        <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 } }}>
-          <Button onClick={() => setOpenEditDialog(false)} sx={{ minHeight: { xs: 44, sm: 'auto' } }}>Cancel</Button>
-          <Button onClick={handleEditHabit} variant="contained" sx={{ minHeight: { xs: 44, sm: 'auto' } }}>Save</Button>
+        <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, gap: 1 }}>
+          <Button 
+            onClick={() => setOpenEditDialog(false)} 
+            sx={{ 
+              minHeight: 44,
+              px: { xs: 2.5, sm: 2 },
+              fontSize: { xs: '1rem', sm: '0.875rem' },
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleEditHabit} 
+            variant="contained" 
+            sx={{ 
+              minHeight: 44,
+              px: { xs: 2.5, sm: 2 },
+              fontSize: { xs: '1rem', sm: '0.875rem' },
+            }}
+          >
+            Save
+          </Button>
         </DialogActions>
       </Dialog>
     </motion.div>

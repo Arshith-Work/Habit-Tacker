@@ -156,7 +156,8 @@ function MainApp() {
         sx={{ 
           minHeight: '100vh', 
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          py: 4,
+          py: { xs: 2, sm: 3, md: 4 },
+          px: { xs: 1, sm: 2 },
           position: 'relative',
           overflow: 'hidden',
         }}
@@ -178,7 +179,11 @@ function MainApp() {
           />
         ))}
 
-        <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1 }}>
+        <Container maxWidth="xl" sx={{ 
+          position: 'relative', 
+          zIndex: 1,
+          px: { xs: 1, sm: 2, md: 3 },
+        }}>
           {/* Header */}
           <Paper
             elevation={8}
@@ -187,8 +192,8 @@ function MainApp() {
               textAlign: 'center', 
               position: 'relative',
               backdropFilter: 'blur(10px)',
-              borderRadius: 4,
-              p: { xs: 2, md: 3 },
+              borderRadius: { xs: 3, md: 4 },
+              p: { xs: 2, sm: 2.5, md: 3 },
               boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
             }}
           >
@@ -234,6 +239,8 @@ function MainApp() {
                   aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
                   sx={{
                     color: '#667eea',
+                    minWidth: 44,
+                    minHeight: 44,
                     '&:hover': {
                       background: 'rgba(102,126,234,0.1)',
                     },
@@ -253,6 +260,9 @@ function MainApp() {
                   borderColor: '#667eea',
                   color: '#667eea',
                   fontWeight: 600,
+                  minHeight: 44,
+                  px: { xs: 2, sm: 2.5 },
+                  fontSize: { xs: '0.95rem', sm: '0.875rem' },
                   '&:hover': {
                     borderColor: '#764ba2',
                     background: 'rgba(102,126,234,0.1)',
@@ -293,7 +303,7 @@ function MainApp() {
               textAlign: 'center',
               backdropFilter: 'blur(10px)',
               borderRadius: 3,
-              p: 2,
+              p: { xs: 1.5, sm: 2 },
             }}
           >
             <Typography variant="body2" color="text.secondary">
