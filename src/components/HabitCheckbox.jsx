@@ -482,9 +482,9 @@ const HabitCheckbox = ({ onProgressUpdate, userName }) => {
                       backgroundColor: `${getCategoryColor(habit.category)}20`,
                       color: getCategoryColor(habit.category),
                       fontWeight: 600,
-                      fontSize: { xs: '0.65rem', sm: '0.7rem' },
-                      mr: { xs: 11, sm: 8 },
-                      height: { xs: 24, sm: 26 },
+                      fontSize: '0.7rem',
+                      mr: 8,
+                      height: 26,
                       display: { xs: 'none', sm: 'flex' },
                     }}
                   />
